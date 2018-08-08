@@ -1,0 +1,48 @@
+version: '2'
+
+services:
+  bcoin:
+    image: ambisafe1/bcoin-node:{{ bcoin_version }}
+    container_name: bupernode_bcoin
+    restart: always
+    command: >
+      --daemon
+      --network {{ bitcoin_network }}
+      --prefix '/data'
+      --db leveldb
+      --use-workers true
+      --log-file false
+      --log-level info
+      --log-console true
+      --max-files 8192
+      --api-key {{ bcoin_rpc_api_key }}
+      --host 0.0.0.0
+      --port 8333
+      --http-host 0.0.0.0
+      --http-port 8332
+      --index-tx true
+      --index-address true
+    ports:
+      - "8333:8333" # Mainnet
+      - "8332:8332" # RPC
+    volumes:
+      - {{ blockchain_data_path }}:/data
+    network_mode: host
+
+  node-exporter:
+    image: prom/node-exporter:{{ node_exporter_version }}
+    container_name: supernode_worker_node_exporter
+    restart: unless-stopped
+    user: root
+    privileged: true
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($$|/)'
+    ports:
+      - 9100:9100
+    network_mode: host

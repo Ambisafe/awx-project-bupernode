@@ -1,0 +1,86 @@
+- name: Bupernode Worker
+  hosts: bupernode-workers
+  become: yes
+
+  handlers:
+
+    - name: stop worker
+      docker_container:
+        name: "{{ item }}"
+        state: absent
+      with_items:
+        - bupernode_worker_{{ worker_type }}
+        - bupernode_worker_ether_exporter
+        - bupernode_worker_node_exporter
+      async: 45
+      poll: 5
+      listen: "restart worker"
+
+    - name: start worker
+      docker_service:
+        project_name: bupernode
+        project_src: "{{ bupernode_path }}"
+        pull: yes
+        state: present
+      listen: "restart worker"
+
+    - name: reload worker
+      docker_container:
+        name: bupernode_worker_{{ worker_type }}
+        image: "ambisafe1/bcoin-node:{{ bcoin_version }}"
+        state: started
+        restart: yes
+
+  pre_tasks:
+
+    - name: set default bitcoin_chain
+      set_fact:
+        bitcoin_chain: mainnet
+      when: bitcoin_chain is not defined
+      tags: ['always']
+
+    - name: set default vars
+      set_fact:
+        bupernode_path: /opt/bupernode
+      when: bupernode_path is not defined  
+      tags: ['always']
+
+    - name: install pip
+      package:
+        name: python-pip
+        state: present
+      tags: ['provision']
+
+    - name: install python deps
+      pip:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - docker
+        - docker-compose
+      tags: ['provision']
+
+  tasks:
+
+    - name: create bupernode paths
+      file:
+        path: "{{ item }}"
+        state: directory
+        recurse: yes
+      with_items:
+        - "{{ bupernode_path }}"
+        - "{{ blockchain_data_path }}"
+      tags: ['provision']
+
+    - name: copy worker docker-compose file
+      template:
+        src: "{{ worker_type }}/docker-compose.yml.j2"
+        dest: "{{ bupernode_path }}/docker-compose.yml"
+      notify:
+        - restart worker
+      tags: ['provision','update']
+
+    - command: echo "Restarting Bcoin...."
+      notify: 
+        - reload worker
+      tags: ['restart']

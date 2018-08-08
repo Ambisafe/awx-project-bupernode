@@ -1,0 +1,25 @@
+# main, testnet
+network: {{ bcoin_network }}
+
+# Data directory
+prefix: /data
+db: leveldb
+
+# Whether to use a worker process pool for transaction verification
+use-workers: true
+
+log-file: false
+log-level: info
+log-console: true
+
+# Max open files for leveldb. Higher generally means more disk page cache benefits, but also more memory usage
+max-files: 8192
+
+# Secure settings
+api-key: {{ bcoin_rpc_api_key }}
+
+http-host: 0.0.0.0
+http-port: {{ bcoin_rpc_port }}
+
+index-tx: true
+index-address: true
