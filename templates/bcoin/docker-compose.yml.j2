@@ -23,7 +23,7 @@ services:
     networks:
       - "bcoin"
     volumes:
-      - {{ blockchain_data_path }}/bcoin.conf:/data/bcoin.conf
+      - {{ blockchain_data_path }}bcoin.conf:/data/bcoin.conf
 
   node-exporter:
     image: prom/node-exporter:{{ node_exporter_version }}
