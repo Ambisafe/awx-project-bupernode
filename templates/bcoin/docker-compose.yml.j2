@@ -1,33 +1,29 @@
 version: '2'
 
 services:
+
   bcoin:
     image: ambisafe1/bcoin-node:{{ bcoin_version }}
     container_name: bupernode_bcoin
     restart: always
-    command: >
-      --daemon
-      --network {{ bitcoin_network }}
-      --prefix '/data'
-      --db leveldb
-      --use-workers true
-      --log-file false
-      --log-level info
-      --log-console true
-      --max-files 8192
-      --api-key {{ bcoin_rpc_api_key }}
-      --host 0.0.0.0
-      --port 8333
-      --http-host 0.0.0.0
-      --http-port 8332
-      --index-tx true
-      --index-address true
     ports:
-      - "8333:8333" # Mainnet
-      - "8332:8332" # RPC
+      #-- Mainnet
+      - "8333:8333"
+      - "8332:8332" # RPC/HTTP
+      - "8334:8334" # Wallet
+      #-- Testnet
+      # - "18333:18333"
+      # - "18332:18332" # RPC/HTTP
+      # - "18334:18334"
+    environment:
+      BCOIN_CONFIG: /data/bcoin.conf
+      VIRTUAL_HOST: bcoin.yourdomain.org
+      VIRTUAL_PORT: 8332
+      #VIRTUAL_PORT: 18332 # Testnest
+    networks:
+      - "bcoin"
     volumes:
-      - {{ blockchain_data_path }}:/data
-    network_mode: host
+      - {{ blockchain_data_path }}/bcoin.conf:/data/bcoin.conf
 
   node-exporter:
     image: prom/node-exporter:{{ node_exporter_version }}
@@ -45,4 +41,8 @@ services:
       - '--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($$|/)'
     ports:
       - 9100:9100
-    network_mode: host
+
+networks:
+  bcoin:
+    external:
+      name: "bcoin"

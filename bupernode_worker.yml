@@ -1,7 +1,20 @@
 - name: Bupernode Worker
-  hosts: bupernode-workers
+  hosts: ec2
   become: yes
+  gather_facts: true
 
+  vars:
+
+    bupernode_path: "/home/ec2-user/"
+    network: testnet
+    prefix: "/data"
+    bitcoin_network: testnet
+    worker_type: "templates/bcoin/"
+    bcoin_rpc_api_key: 123456
+    blockchain_data_path: "/home/ec2-user/"
+    bcoin_version: v1.0.2
+    node_exporter_version: latest
+  
   handlers:
 
     - name: stop worker
@@ -55,6 +68,7 @@
       pip:
         name: "{{ item }}"
         state: present
+        executable: pip-2.6
       with_items:
         - docker
         - docker-compose
